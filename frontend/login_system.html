@@ -29,7 +29,6 @@
             background: linear-gradient(135deg, #020617 0%, #000000 100%);
         }
         
-        /* Main Container */
         .login-container {
             width: 100%;
             max-width: 500px;
@@ -45,17 +44,10 @@
         }
         
         @keyframes slideUp {
-            from {
-                opacity: 0;
-                transform: translateY(30px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
+            from { opacity: 0; transform: translateY(30px); }
+            to { opacity: 1; transform: translateY(0); }
         }
         
-        /* Header */
         .login-header {
             padding: 30px;
             text-align: center;
@@ -90,7 +82,6 @@
             opacity: 0.8;
         }
         
-        /* Tabs */
         .login-tabs {
             display: flex;
             border-bottom: 1px solid #e5e7eb;
@@ -120,7 +111,6 @@
             font-size: 16px;
         }
         
-        /* Admin Tab - Blue Theme */
         .tab-button[data-tab="admin"] {
             color: #6b7280;
         }
@@ -141,7 +131,6 @@
             background: #60a5fa;
         }
         
-        /* Department Tab - Green Theme */
         .tab-button[data-tab="department"] {
             color: #6b7280;
         }
@@ -179,7 +168,6 @@
             background: rgba(255,255,255,0.05);
         }
         
-        /* Forms */
         .login-form {
             padding: 30px;
             display: none;
@@ -191,14 +179,8 @@
         }
         
         @keyframes fadeIn {
-            from {
-                opacity: 0;
-                transform: translateY(10px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
         }
         
         /* Admin Form - Blue Theme */
@@ -251,7 +233,6 @@
             box-shadow: 0 10px 20px -5px rgba(5,150,105,0.4);
         }
         
-        /* Input Groups */
         .input-group {
             margin-bottom: 20px;
         }
@@ -286,7 +267,6 @@
             color: #f1f5f9;
         }
         
-        /* Password Wrapper */
         .password-wrapper {
             position: relative;
         }
@@ -309,7 +289,6 @@
             color: inherit;
         }
         
-        /* Login Button */
         .login-btn {
             width: 100%;
             padding: 12px;
@@ -332,7 +311,6 @@
             transform: none;
         }
         
-        /* Messages */
         .error-message {
             background: #fee2e2;
             color: #dc2626;
@@ -383,7 +361,6 @@
             text-decoration: underline;
         }
         
-        /* Loading Spinner */
         .loading-spinner {
             display: inline-block;
             width: 14px;
@@ -399,7 +376,6 @@
             to { transform: rotate(360deg); }
         }
         
-        /* Theme Toggle */
         .theme-toggle {
             position: fixed;
             top: 20px;
@@ -426,7 +402,6 @@
             transform: scale(1.05);
         }
         
-        /* Toast Notification */
         .toast-notification {
             position: fixed;
             bottom: 20px;
@@ -450,28 +425,15 @@
         }
         
         @keyframes slideInRight {
-            from {
-                transform: translateX(100%);
-                opacity: 0;
-            }
-            to {
-                transform: translateX(0);
-                opacity: 1;
-            }
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
         }
         
         @keyframes slideOutRight {
-            from {
-                transform: translateX(0);
-                opacity: 1;
-            }
-            to {
-                transform: translateX(100%);
-                opacity: 0;
-            }
+            from { transform: translateX(0); opacity: 1; }
+            to { transform: translateX(100%); opacity: 0; }
         }
         
-        /* Modal */
         .modal {
             display: none;
             position: fixed;
@@ -499,14 +461,8 @@
         }
         
         @keyframes modalFadeIn {
-            from {
-                opacity: 0;
-                transform: scale(0.95);
-            }
-            to {
-                opacity: 1;
-                transform: scale(1);
-            }
+            from { opacity: 0; transform: scale(0.95); }
+            to { opacity: 1; transform: scale(1); }
         }
         
         .modal h3 {
@@ -573,21 +529,11 @@
             background: #475569;
         }
         
-        /* Responsive */
         @media (max-width: 480px) {
-            .login-container {
-                border-radius: 24px;
-            }
-            .login-header {
-                padding: 25px;
-            }
-            .login-form {
-                padding: 25px;
-            }
-            .tab-button {
-                padding: 14px;
-                font-size: 13px;
-            }
+            .login-container { border-radius: 24px; }
+            .login-header { padding: 25px; }
+            .login-form { padding: 25px; }
+            .tab-button { padding: 14px; font-size: 13px; }
         }
     </style>
 </head>
@@ -618,7 +564,7 @@
         </button>
     </div>
     
-    <!-- Admin Login Form - BLUE Theme -->
+    <!-- Admin Login Form -->
     <div id="adminForm" class="login-form active">
         <div id="adminError" class="error-message" style="display: none;">
             <i class="fas fa-exclamation-circle"></i>
@@ -652,11 +598,11 @@
         </button>
         
         <div style="text-align: center; margin-top: 20px; font-size: 11px; color: #9ca3af;">
-            <i class="fas fa-shield-alt"></i> Only Super Administrators can access
+            <i class="fas fa-shield-alt"></i> For Super Administrators only
         </div>
     </div>
     
-    <!-- Department Login Form - GREEN Theme -->
+    <!-- Department Login Form -->
     <div id="departmentForm" class="login-form">
         <div id="deptError" class="error-message" style="display: none;">
             <i class="fas fa-exclamation-circle"></i>
@@ -698,7 +644,7 @@
     </div>
 </div>
 
-<!-- Forgot Password Modal (Only for Admin) -->
+<!-- Forgot Password Modal -->
 <div id="forgotPasswordModal" class="modal">
     <div class="modal-content">
         <span class="close-modal" onclick="closeForgotPasswordModal()">&times;</span>
@@ -731,13 +677,6 @@
     // ==================== API CONFIGURATION ====================
     const API_BASE = '../backend/api/';
     
-    // Valid admin emails (only these can login as admin)
-    const VALID_ADMIN_EMAILS = [
-        'jacksonmyula773@gmail.com',
-        'admin@geotraverse.com',
-        'superadmin@geotraverse.com'
-    ];
-    
     // Department ID to Page Mapping
     const departmentPages = {
         2: "finance.html",
@@ -766,6 +705,12 @@
         10: "william.ruvuma@geotraverse.com",
         11: "hamisi.ramadhan@geotraverse.com",
         12: "richard.arusha@geotraverse.com"
+    };
+    
+    const departmentNames = {
+        2: "Finance", 3: "Sales & Marketing", 4: "Manager", 5: "Secretary",
+        6: "Bricks & Timber", 7: "Aluminium", 8: "Town Planning", 9: "Architectural",
+        10: "Survey", 11: "Construction", 12: "Hatimiliki"
     };
     
     // ==================== LOAD DEPARTMENTS ====================
@@ -903,7 +848,7 @@
         }
     }
     
-    // ==================== ADMIN LOGIN (STRICT - ONLY SUPER ADMIN) ====================
+    // ==================== ADMIN LOGIN - FLEXIBLE (ACCEPTS ANY SUPER ADMIN) ====================
     async function loginAdmin() {
         const email = document.getElementById('adminEmail').value.trim();
         const password = document.getElementById('adminPassword').value;
@@ -915,12 +860,6 @@
         
         if (!password) {
             showError('adminError', 'adminErrorMsg', 'Please enter password');
-            return;
-        }
-        
-        // STRICT VALIDATION: Only admin emails can proceed
-        if (!VALID_ADMIN_EMAILS.includes(email.toLowerCase())) {
-            showError('adminError', 'adminErrorMsg', '❌ You are not authorized as Admin. Only Super Administrators can access this section. Please use Department Login.');
             return;
         }
         
@@ -938,6 +877,7 @@
             
             const result = await response.json();
             
+            // Check if login was successful AND user has Super Administrator role
             if (result.success && result.user && result.user.role === 'Super Administrator') {
                 showSuccess('adminSuccess', 'adminSuccessMsg', '✅ Login successful! Redirecting to Admin Dashboard...');
                 showToast('✅ Login successful! Redirecting...');
@@ -945,7 +885,7 @@
                     window.location.href = result.redirect || 'super_admin.html';
                 }, 1000);
             } else {
-                showError('adminError', 'adminErrorMsg', result.message || '❌ Invalid credentials or you do not have Super Admin privileges.');
+                showError('adminError', 'adminErrorMsg', '❌ Invalid credentials or you do not have Super Admin privileges.');
                 setLoading('adminLoginBtn', false);
             }
         } catch (error) {
@@ -1014,12 +954,6 @@
         }
     }
     
-    const departmentNames = {
-        2: "Finance", 3: "Sales & Marketing", 4: "Manager", 5: "Secretary",
-        6: "Bricks & Timber", 7: "Aluminium", 8: "Town Planning", 9: "Architectural",
-        10: "Survey", 11: "Construction", 12: "Hatimiliki"
-    };
-    
     // ==================== CHECK SESSION ====================
     async function checkSession() {
         try {
@@ -1059,13 +993,7 @@
         const email = document.getElementById('resetEmail').value.trim();
         
         if (!email) {
-            showError('resetError', 'resetErrorMsg', 'Please enter admin email address');
-            return;
-        }
-        
-        // Only admin emails can reset password
-        if (!VALID_ADMIN_EMAILS.includes(email.toLowerCase())) {
-            showError('resetError', 'resetErrorMsg', 'This feature is only available for Admin accounts.');
+            showError('resetError', 'resetErrorMsg', 'Please enter your email address');
             return;
         }
         
@@ -1120,14 +1048,12 @@
                 deptForm.classList.remove('active');
                 document.getElementById('adminError').style.display = 'none';
                 document.getElementById('adminSuccess').style.display = 'none';
-                // Change header to blue theme
                 loginHeader.style.background = 'linear-gradient(135deg, #1e3a8a 0%, #1e40af 100%)';
             } else {
                 adminForm.classList.remove('active');
                 deptForm.classList.add('active');
                 document.getElementById('deptError').style.display = 'none';
                 document.getElementById('deptSuccess').style.display = 'none';
-                // Change header to green theme
                 loginHeader.style.background = 'linear-gradient(135deg, #059669 0%, #047857 100%)';
             }
         });
