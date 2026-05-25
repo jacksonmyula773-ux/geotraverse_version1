@@ -1415,16 +1415,20 @@ async function sendChatReply() {
 async function loadReports(highlightId = null) {
     const res = await apiCall(`get_reports.php?department_id=${DEPARTMENT_ID}`);
     if (res.success && res.data) {
-        // Filter out deleted reports
+        // Show reports that belong to this department OR were sent to this department
         reportsData = res.data.filter(r => 
+            (r.department_id === DEPARTMENT_ID || r.sent_to_department === DEPARTMENT_ID) &&
             r.deleted_by_department !== 1 && 
             r.deleted_by_admin !== 1
         ).sort((a,b) => new Date(b.created_at) - new Date(a.created_at));
         
-        // Count unviewed reports (reports sent TO this department that are not viewed)
+        // IMPORTANT: Count unviewed reports ONLY for reports SENT TO this department
+        // NOT for reports created by this department
         unviewedReportsCount = reportsData.filter(r => 
-            (r.is_viewed_by_department === 0 || r.is_viewed_by_department === null) && 
-            (r.sent_from_department === DEPARTMENT_ID || r.department_id === DEPARTMENT_ID)
+            r.sent_from_department && 
+            r.sent_from_department !== DEPARTMENT_ID && 
+            r.sent_to_department === DEPARTMENT_ID &&
+            (r.is_viewed_by_department === 0 || r.is_viewed_by_department === null)
         ).length;
     } else {
         reportsData = [];
@@ -1451,12 +1455,16 @@ async function loadReports(highlightId = null) {
     
     let reportsHtml = '';
     for (let r of reportsData) {
-        // Check if report is unviewed (sent to this department and not viewed yet)
+        // IMPORTANT: NEW badge ONLY for reports SENT FROM other departments
+        // NOT for reports created by this department
         const isUnviewed = (r.is_viewed_by_department === 0 || r.is_viewed_by_department === null) && 
-                           (r.sent_from_department === DEPARTMENT_ID || r.department_id === DEPARTMENT_ID);
+                           r.sent_from_department && 
+                           r.sent_from_department !== DEPARTMENT_ID && 
+                           r.sent_to_department === DEPARTMENT_ID;
+        
         const isHighlighted = highlightId && r.id === highlightId;
         const statusClass = r.status === 'sent' ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700';
-        const sentFrom = r.sent_from_department ? `📨 From: ${departmentNames[r.sent_from_department] || 'Unknown'}` : '';
+        const sentFrom = r.sent_from_department ? `<span class="text-[8px] text-green-600 block mt-1">📨 From: ${departmentNames[r.sent_from_department] || 'Unknown'}</span>` : '';
         
         reportsHtml += `<div class="report-card ${isUnviewed ? 'report-unviewed' : ''} ${isHighlighted ? 'search-highlight' : ''}" id="report-card-${r.id}" onclick="viewReportDetail(${r.id})">
             <div class="report-header-custom" style="background: #059669;">
@@ -1466,7 +1474,7 @@ async function loadReports(highlightId = null) {
                         <div>
                             <h4 class="font-semibold text-xs">${escapeHtml(r.title)}</h4>
                             <p class="text-[9px] opacity-90">${departmentNames[r.department_id] || 'Finance'} · ${r.period}</p>
-                            ${sentFrom ? `<p class="text-[8px] opacity-75">${sentFrom}</p>` : ''}
+                            ${sentFrom}
                         </div>
                     </div>
                     ${isUnviewed ? '<div class="new-badge w-5 h-5 rounded-full bg-red-500 text-white text-[9px] flex items-center justify-center">!</div>' : ''}
@@ -1480,7 +1488,7 @@ async function loadReports(highlightId = null) {
                 <div class="text-[10px] text-gray-600 line-clamp-2">${escapeHtml(r.content?.substring(0, 100) || '')}${r.content?.length > 100 ? '...' : ''}</div>
                 <div class="flex gap-2 justify-end mt-2 pt-1 border-t">
                     <button onclick="event.stopPropagation(); viewReportDetail(${r.id})" class="action-btn view"><i class="fas fa-eye"></i></button>
-                    ${r.department_id === DEPARTMENT_ID ? `<button onclick="event.stopPropagation(); editReport(${r.id})" class="action-btn edit"><i class="fas fa-edit"></i></button>` : ''}
+                    <button onclick="event.stopPropagation(); editReport(${r.id})" class="action-btn edit"><i class="fas fa-edit"></i></button>
                     <button onclick="event.stopPropagation(); deleteReport(${r.id})" class="action-btn delete"><i class="fas fa-trash"></i></button>
                 </div>
             </div>
@@ -1526,7 +1534,12 @@ async function markReportAsViewed(reportId) {
 function viewReportDetail(id) {
     const r = reportsData.find(r => r.id === id);
     if (r) {
-        if ((r.is_viewed_by_department === 0 || r.is_viewed_by_department === null) && r.sent_from_department !== DEPARTMENT_ID) { 
+        // Only mark as viewed if this report was SENT TO this department
+        // AND not viewed yet AND not created by this department
+        if ((r.is_viewed_by_department === 0 || r.is_viewed_by_department === null) && 
+            r.sent_from_department && 
+            r.sent_from_department !== DEPARTMENT_ID && 
+            r.sent_to_department === DEPARTMENT_ID) { 
             markReportAsViewed(id); 
         }
         
@@ -1534,6 +1547,7 @@ function viewReportDetail(id) {
             <div><strong class="text-green-400 text-xs">Period:</strong> <span class="text-gray-300 text-xs">${r.period}</span></div>
             <div><strong class="text-green-400 text-xs">Created:</strong> <span class="text-gray-300 text-xs">${formatDate(r.created_at)}</span></div>
             <div><strong class="text-green-400 text-xs">Status:</strong> <span class="text-gray-300 text-xs">${r.status === 'sent' ? 'Sent' : 'Draft'}</span></div>
+            ${r.sent_from_department ? `<div><strong class="text-green-400 text-xs">Received From:</strong> <span class="text-gray-300 text-xs">${departmentNames[r.sent_from_department] || 'Unknown'}</span></div>` : ''}
             <div class="border-t border-gray-700 my-2"></div>
             <div class="whitespace-pre-wrap text-gray-200 text-xs leading-relaxed">${escapeHtml(r.content)}</div>
         </div>`;
@@ -1581,34 +1595,61 @@ function viewReportDetail(id) {
 
 async function sendReportToDept(reportId, deptId) {
     const r = reportsData.find(r => r.id === reportId);
-    if (r) {
-        // Get department name (handle Super Admin separately)
-        let deptName = departmentNames[deptId];
-        if (deptId == 1) deptName = "Super Admin";
-        
-        const msg = `📊 REPORT FROM FINANCE DEPARTMENT:\n\nTitle: ${r.title}\nPeriod: ${r.period}\n\n${r.content?.substring(0, 500) || ''}\n\n---\nGenerated from Finance Department Dashboard`;
-        
-        const payload = { 
-            sender_dept: DEPARTMENT_ID, 
-            receiver_dept: parseInt(deptId), 
-            message: msg, 
-            subject: `Report: ${r.title}`
+    if (!r) {
+        showToast('Report not found', true);
+        return;
+    }
+    
+    // Check if sending to self
+    if (parseInt(deptId) === DEPARTMENT_ID) {
+        showToast('Cannot send report to your own department', true);
+        toggleSendDropdown(`reportSendDropdown-${reportId}`);
+        return;
+    }
+    
+    const sendBtn = document.querySelector('#viewReportModal .dropdown-trigger');
+    const originalText = sendBtn ? sendBtn.innerHTML : 'Send';
+    if (sendBtn) {
+        sendBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-1"></i> Sending...';
+        sendBtn.disabled = true;
+    }
+    
+    try {
+        const payload = {
+            report_id: parseInt(reportId),
+            to_department_id: parseInt(deptId),
+            from_department_id: DEPARTMENT_ID,
+            message: '📊 REPORT FROM FINANCE:\n\nTitle: ' + r.title + '\nPeriod: ' + r.period + '\n\n' + (r.content || '').substring(0, 500)
         };
         
-        console.log("Sending report to department:", deptId, payload);
+        console.log("Sending report payload:", payload);
         
-        const res = await apiCall('send_message.php', 'POST', payload);
+        const res = await apiCall('send_report.php', 'POST', payload);
+        
+        console.log("Send report response:", res);
         
         if (res && res.success) {
+            const deptName = departmentNames[deptId] || 'Department';
             showToast(`✅ Report "${r.title}" sent to ${deptName}`);
+            // Update local report status
             r.status = 'sent';
             await loadReports();
-        } else { 
-            showToast(res?.message || 'Failed to send report', true); 
+            await loadDashboard();
+        } else {
+            showToast('❌ ' + (res?.message || 'Failed to send report'), true);
         }
-        toggleSendDropdown(`reportSendDropdown-${reportId}`);
-        closeModal('viewReportModal');
+    } catch(e) {
+        console.error("Send error:", e);
+        showToast('❌ Network error: ' + e.message, true);
+    } finally {
+        if (sendBtn) {
+            sendBtn.innerHTML = originalText;
+            sendBtn.disabled = false;
+        }
     }
+    
+    toggleSendDropdown(`reportSendDropdown-${reportId}`);
+    closeModal('viewReportModal');
 }
 
 function exportSingleReportExcel(reportId) {
