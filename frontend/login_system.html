@@ -183,7 +183,6 @@
             to { opacity: 1; transform: translateY(0); }
         }
         
-        /* Admin Form - Blue Theme */
         #adminForm .input-group input:focus,
         #adminForm .input-group select:focus {
             border-color: #1e40af;
@@ -212,7 +211,6 @@
             color: #60a5fa;
         }
         
-        /* Department Form - Green Theme */
         #departmentForm .input-group input:focus,
         #departmentForm .input-group select:focus {
             border-color: #059669;
@@ -529,6 +527,41 @@
             background: #475569;
         }
         
+        .form-group {
+            margin-bottom: 16px;
+        }
+        
+        .form-group label {
+            display: block;
+            font-size: 13px;
+            font-weight: 500;
+            margin-bottom: 6px;
+            color: #374151;
+        }
+        
+        body.dark-mode .form-group label {
+            color: #94a3b8;
+        }
+        
+        .form-group input {
+            width: 100%;
+            padding: 10px 12px;
+            font-size: 14px;
+            border: 1.5px solid #e5e7eb;
+            border-radius: 10px;
+            background: white;
+        }
+        
+        body.dark-mode .form-group input {
+            background: #0f172a;
+            border-color: #334155;
+            color: #f1f5f9;
+        }
+        
+        .hidden {
+            display: none;
+        }
+        
         @media (max-width: 480px) {
             .login-container { border-radius: 24px; }
             .login-header { padding: 25px; }
@@ -590,7 +623,9 @@
         </div>
         
         <div class="forgot-password">
-            <a onclick="openForgotPasswordModal()"><i class="fas fa-key"></i> Forgot Password?</a>
+            <a onclick="openForgotPasswordModal()" style="cursor: pointer;">
+                <i class="fas fa-key"></i> Forgot Password?
+            </a>
         </div>
         
         <button class="login-btn" id="adminLoginBtn" onclick="loginAdmin()">
@@ -644,31 +679,23 @@
     </div>
 </div>
 
-<!-- Forgot Password Modal -->
+<!-- Forgot Password Modal (SINGLE CORRECT VERSION) -->
 <div id="forgotPasswordModal" class="modal">
-    <div class="modal-content">
+    <div class="modal-content" style="max-width: 400px;">
         <span class="close-modal" onclick="closeForgotPasswordModal()">&times;</span>
         <h3><i class="fas fa-key" style="color: #1e40af;"></i> Reset Admin Password</h3>
         <p style="font-size: 13px; color: #6b7280; margin-bottom: 20px;">Enter your admin email address and we'll send you a reset link.</p>
         
-        <div class="input-group">
+        <div class="form-group">
             <label><i class="fas fa-envelope"></i> Admin Email Address</label>
             <input type="email" id="resetEmail" placeholder="admin@geotraverse.com">
         </div>
         
-        <div id="resetError" class="error-message" style="display: none;">
-            <i class="fas fa-exclamation-circle"></i>
-            <span id="resetErrorMsg"></span>
-        </div>
-        
-        <div id="resetSuccess" class="success-message" style="display: none;">
-            <i class="fas fa-check-circle"></i>
-            <span id="resetSuccessMsg"></span>
-        </div>
+        <div id="resetMessage" class="hidden" style="padding: 8px 12px; border-radius: 8px; font-size: 12px; margin-bottom: 15px;"></div>
         
         <div class="modal-buttons">
             <button class="btn-secondary" onclick="closeForgotPasswordModal()">Cancel</button>
-            <button class="btn-primary" onclick="sendResetPassword()">Send Reset Link</button>
+            <button class="btn-primary" id="resetSendBtn" onclick="sendResetPassword()">Send Reset Link</button>
         </div>
     </div>
 </div>
@@ -676,6 +703,13 @@
 <script>
     // ==================== API CONFIGURATION ====================
     const API_BASE = '../backend/api/';
+    
+    // Valid admin emails for password reset
+    const VALID_ADMIN_EMAILS = [
+        'jacksonmyula773@gmail.com',
+        'admin@geotraverse.com',
+        'superadmin@geotraverse.com'
+    ];
     
     // Department ID to Page Mapping
     const departmentPages = {
@@ -818,6 +852,18 @@
         }
     }
     
+    function showResetMessage(message, isError = false) {
+        const msgDiv = document.getElementById('resetMessage');
+        if (msgDiv) {
+            msgDiv.className = isError ? 'error-message' : 'success-message';
+            msgDiv.style.display = 'block';
+            msgDiv.innerHTML = `<i class="fas ${isError ? 'fa-exclamation-circle' : 'fa-check-circle'}"></i> ${message}`;
+            setTimeout(() => {
+                msgDiv.style.display = 'none';
+            }, 5000);
+        }
+    }
+    
     function showToast(message, isError = false) {
         const existingToast = document.querySelector('.toast-notification');
         if (existingToast) existingToast.remove();
@@ -843,12 +889,14 @@
                 btn.innerHTML = '<i class="fas fa-sign-in-alt"></i> Login as Admin';
             } else if (buttonId === 'deptLoginBtn') {
                 btn.innerHTML = '<i class="fas fa-sign-in-alt"></i> Login as Department';
+            } else if (buttonId === 'resetSendBtn') {
+                btn.innerHTML = 'Send Reset Link';
             }
             btn.disabled = false;
         }
     }
     
-    // ==================== ADMIN LOGIN - FLEXIBLE (ACCEPTS ANY SUPER ADMIN) ====================
+    // ==================== ADMIN LOGIN ====================
     async function loginAdmin() {
         const email = document.getElementById('adminEmail').value.trim();
         const password = document.getElementById('adminPassword').value;
@@ -877,7 +925,6 @@
             
             const result = await response.json();
             
-            // Check if login was successful AND user has Super Administrator role
             if (result.success && result.user && result.user.role === 'Super Administrator') {
                 showSuccess('adminSuccess', 'adminSuccessMsg', '✅ Login successful! Redirecting to Admin Dashboard...');
                 showToast('✅ Login successful! Redirecting...');
@@ -931,7 +978,6 @@
             const result = await response.json();
             
             if (result.success) {
-                // Verify department match
                 if (result.user && result.user.department_id == deptId) {
                     showSuccess('deptSuccess', 'deptSuccessMsg', `✅ Login successful! Redirecting to ${departmentNames[deptId] || 'Department'} Dashboard...`);
                     showToast(`✅ Login successful! Redirecting...`);
@@ -980,8 +1026,11 @@
     // ==================== FORGOT PASSWORD MODAL ====================
     function openForgotPasswordModal() {
         document.getElementById('resetEmail').value = '';
-        document.getElementById('resetError').style.display = 'none';
-        document.getElementById('resetSuccess').style.display = 'none';
+        const msgDiv = document.getElementById('resetMessage');
+        if (msgDiv) {
+            msgDiv.style.display = 'none';
+            msgDiv.innerHTML = '';
+        }
         document.getElementById('forgotPasswordModal').style.display = 'flex';
     }
     
@@ -989,47 +1038,58 @@
         document.getElementById('forgotPasswordModal').style.display = 'none';
     }
     
-    async function sendResetPassword() {
-        const email = document.getElementById('resetEmail').value.trim();
-        
-        if (!email) {
-            showError('resetError', 'resetErrorMsg', 'Please enter your email address');
-            return;
-        }
-        
-        const btn = document.querySelector('#forgotPasswordModal .btn-primary');
-        const originalText = btn.innerHTML;
-        btn.innerHTML = '<span class="loading-spinner"></span> Sending...';
-        btn.disabled = true;
-        
-        try {
-            const response = await fetch(API_BASE + 'forgot_password.php', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ email, user_type: 'admin' })
-            });
-            
-            const result = await response.json();
-            
-            if (result.success) {
-                document.getElementById('resetError').style.display = 'none';
-                showSuccess('resetSuccess', 'resetSuccessMsg', result.message);
-                showToast(result.message);
-                
-                setTimeout(() => {
-                    closeForgotPasswordModal();
-                }, 3000);
-            } else {
-                showError('resetError', 'resetErrorMsg', result.message || 'Failed to reset password');
-            }
-        } catch (error) {
-            console.error('Reset password error:', error);
-            showError('resetError', 'resetErrorMsg', 'Network error. Please try again.');
-        } finally {
-            btn.innerHTML = originalText;
-            btn.disabled = false;
-        }
+async function sendResetPassword() {
+    const email = document.getElementById('resetEmail').value.trim();
+    
+    if (!email) {
+        showResetMessage('Please enter your admin email address', true);
+        return;
     }
+    
+    if (email.toLowerCase() !== 'jacksonmyula773@gmail.com') {
+        showResetMessage('This feature is only available for Super Admin account.', true);
+        return;
+    }
+    
+    const btn = document.getElementById('resetSendBtn');
+    const originalText = btn.innerHTML;
+    btn.innerHTML = '<span class="loading-spinner"></span> Processing...';
+    btn.disabled = true;
+    
+    try {
+        const response = await fetch(API_BASE + 'forgot_password.php', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email: email })
+        });
+        
+        const result = await response.json();
+        
+        if (result.success && result.reset_link) {
+            // Show the link in a message box
+            const linkMessage = '✅ Reset link generated!\n\n' + result.reset_link + '\n\nCopy this link and open in your browser to reset your password.';
+            
+            // Show in alert (temporary for testing)
+            alert(linkMessage);
+            
+            // Also copy to clipboard
+            await navigator.clipboard.writeText(result.reset_link);
+            showResetMessage('✅ Reset link copied to clipboard!', false);
+            
+            setTimeout(() => {
+                closeForgotPasswordModal();
+            }, 3000);
+        } else {
+            showResetMessage(result.message || 'Failed to generate reset link', true);
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        showResetMessage('Network error: ' + error.message, true);
+    } finally {
+        btn.innerHTML = originalText;
+        btn.disabled = false;
+    }
+}
     
     // ==================== TAB SWITCHING ====================
     const tabButtons = document.querySelectorAll('.tab-button');
@@ -1093,6 +1153,10 @@
     
     document.getElementById('deptPassword')?.addEventListener('keypress', function(e) {
         if (e.key === 'Enter') loginDepartment();
+    });
+    
+    document.getElementById('resetEmail')?.addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') sendResetPassword();
     });
     
     // Close modal when clicking outside

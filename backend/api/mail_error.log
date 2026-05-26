@@ -1,0 +1,6 @@
+[26-May-2026 13:51:30 Europe/Berlin] PHP Warning:  require_once(C:\xampp\htdocs\geotraverse\backend\api/phpmailer/src/Exception.php): Failed to open stream: No such file or directory in C:\xampp\htdocs\geotraverse\backend\api\mail_config.php on line 6
+[26-May-2026 13:51:30 Europe/Berlin] PHP Fatal error:  Uncaught Error: Failed opening required 'C:\xampp\htdocs\geotraverse\backend\api/phpmailer/src/Exception.php' (include_path='C:\xampp\php\PEAR') in C:\xampp\htdocs\geotraverse\backend\api\mail_config.php:6
+Stack trace:
+#0 C:\xampp\htdocs\geotraverse\backend\api\test_email_debug.php(10): require_once()
+#1 {main}
+  thrown in C:\xampp\htdocs\geotraverse\backend\api\mail_config.php on line 6

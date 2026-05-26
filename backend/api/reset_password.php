@@ -1,37 +1,92 @@
 <?php
-require_once '../config/database.php';
-require_once '../includes/auth.php';
+error_reporting(E_ALL);
+ini_set('display_errors', 1);
 
-$auth = new Auth();
-$user = $auth->validateToken();
+header('Content-Type: application/json');
+header('Access-Control-Allow-Origin: *');
+header('Access-Control-Allow-Methods: POST, OPTIONS');
+header('Access-Control-Allow-Headers: Content-Type');
 
-if (!$user || $user['role'] !== 'Super Admin') {
-    sendResponse(false, null, "Unauthorized", 401);
+if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
+    http_response_code(200);
+    exit();
 }
 
-$database = new Database();
-$db = $database->getConnection();
+$db_host = 'localhost';
+$db_user = 'root';
+$db_password = '';
+$db_name = 'geotraverse_erp';
 
-$data = json_decode(file_get_contents("php://input"));
+$conn = new mysqli($db_host, $db_user, $db_password, $db_name);
 
-if (!isset($data->id) || !isset($data->new_password)) {
-    sendResponse(false, null, "Employee ID and new password required");
+if ($conn->connect_error) {
+    echo json_encode(['success' => false, 'message' => 'Database connection failed']);
+    exit();
 }
 
-if (strlen($data->new_password) < 4) {
-    sendResponse(false, null, "Password must be at least 4 characters");
+$data = json_decode(file_get_contents('php://input'), true);
+
+if (!$data) {
+    echo json_encode(['success' => false, 'message' => 'Invalid request']);
+    $conn->close();
+    exit();
 }
 
-$newHash = password_hash($data->new_password, PASSWORD_DEFAULT);
+$token = isset($data['token']) ? $data['token'] : '';
+$password = isset($data['password']) ? $data['password'] : '';
 
-$query = "UPDATE users SET password = :password WHERE id = :id";
-$stmt = $db->prepare($query);
-$stmt->bindParam(':password', $newHash);
-$stmt->bindParam(':id', $data->id);
+if (empty($token) || empty($password)) {
+    echo json_encode(['success' => false, 'message' => 'Token and password are required']);
+    $conn->close();
+    exit();
+}
 
-if ($stmt->execute()) {
-    sendResponse(true, null, "Password reset successfully");
+if (strlen($password) < 4) {
+    echo json_encode(['success' => false, 'message' => 'Password must be at least 4 characters']);
+    $conn->close();
+    exit();
+}
+
+// First, check if token exists
+$stmt = $conn->prepare("SELECT id, reset_token, reset_expires FROM users WHERE reset_token = ?");
+$stmt->bind_param("s", $token);
+$stmt->execute();
+$result = $stmt->get_result();
+
+if ($result->num_rows === 0) {
+    echo json_encode(['success' => false, 'message' => 'Invalid reset token. Please request a new password reset.']);
+    $stmt->close();
+    $conn->close();
+    exit();
+}
+
+$user = $result->fetch_assoc();
+$stmt->close();
+
+// Check if token is expired
+$now = new DateTime();
+$expires = new DateTime($user['reset_expires']);
+
+if ($now > $expires) {
+    echo json_encode(['success' => false, 'message' => 'Reset token has expired. Please request a new password reset.']);
+    $conn->close();
+    exit();
+}
+
+// Hash new password
+$hashed_password = password_hash($password, PASSWORD_DEFAULT);
+
+// Update password and clear token
+$stmt = $conn->prepare("UPDATE users SET password = ?, reset_token = NULL, reset_expires = NULL WHERE id = ?");
+$stmt->bind_param("si", $hashed_password, $user['id']);
+$stmt->execute();
+
+if ($stmt->affected_rows > 0) {
+    echo json_encode(['success' => true, 'message' => 'Password reset successfully! Redirecting to login page...']);
 } else {
-    sendResponse(false, null, "Failed to reset password");
+    echo json_encode(['success' => false, 'message' => 'Failed to reset password. Please try again.']);
 }
+
+$stmt->close();
+$conn->close();
 ?>
